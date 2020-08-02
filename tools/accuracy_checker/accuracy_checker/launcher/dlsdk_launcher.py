@@ -596,7 +596,7 @@ class DLSDKLauncher(Launcher):
             filled_part = [data[-1]] * diff_number
             data = np.concatenate([data, filled_part])
         precision = self.inputs[input_blob].precision
-        data = data.astype(PRECISION_TO_DTYPE[precision])
+        #data = data.astype(PRECISION_TO_DTYPE[precision])
         data_layout = DIM_IDS_TO_LAYOUT.get(tuple(data_layout))
         input_layout = self.inputs[input_blob].layout
         layout_mismatch = (
@@ -761,6 +761,11 @@ class DLSDKLauncher(Launcher):
         if self._weights is None and self._model.suffix != '.onnx':
             self._weights = model_path.parent / (model_path.name.split(model_path.suffix)[0] + '.bin')
         self.network = self.read_network(self._model, self._weights)
+
+        #ng_func = Function.from_capsule(self.network._get_function_capsule())
+        #ng_func.get_parameters()[0].set_partial_shape(PartialShape([3, 800, 1088]))
+        #self.network = ie.IENetwork(Function.to_capsule(ng_func))
+
         self.original_outputs = self.network.outputs
         outputs = self.config.get('outputs')
         if outputs:

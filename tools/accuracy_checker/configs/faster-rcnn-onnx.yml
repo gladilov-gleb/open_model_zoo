@@ -1,0 +1,59 @@
+models:
+  - name: faster-rcnn onnx
+    launchers:
+      - framework: onnx_runtime
+        device: CPU
+        model: /home/ggladilo/Documents/faster-rcnn/validation/faster_rcnn_R_50_FPN_1x.onnx
+        adapter:
+          type: faster_rcnn_onnx
+          boxes_out: '6379'
+          labels_out: '6381'
+          scores_out: '6383'
+
+      - framework: dlsdk
+        # inputs:
+        #  - name: image
+        #    type: INPUT
+        #    precision: 'FP16'
+
+        device: MYRIAD
+        # allow_reshape_input: true
+        model: /home/ggladilo/Documents/faster-rcnn/validation/faster_rcnn_R_50_FPN_1x.onnx
+        adapter:
+          type: faster_rcnn_onnx
+          boxes_out: '6379'
+          labels_out: '6381'
+          scores_out: '6383'
+    datasets:
+      - name: ms_coco_detection_80_class_with_background
+
+        data_source: /home/ggladilo/hdd/datasets/MSCOCO/val2017
+        annotation_conversion:
+          converter: mscoco_detection
+          annotation_file: /home/ggladilo/hdd/datasets/MSCOCO/instances_val2017.json
+          has_background: True
+          sort_annotations: True
+          use_full_label_map: False
+        annotation: mscoco_det_80_bkgr_sorted.pickle
+        dataset_meta:  mscoco_det_80_bkgr.json
+
+        reader: pillow_imread
+        preprocessing:
+          - type: resize
+            use_pillow: True
+
+            # aspect_ratio_scale: detectron_aspect_ratio
+            # size: 800
+            aspect_ratio_scale: fit_to_window
+            dst_height: 800
+            dst_width: 1088
+          - type: bgr_to_rgb
+          - type: normalization
+            mean: 102.9801, 115.9465, 122.7717
+          - type: padding
+            pad_type: right_bottom
+            # stride: 32
+            dst_height: 800
+            dst_width: 1088
+        metrics:
+          - type: coco_precision

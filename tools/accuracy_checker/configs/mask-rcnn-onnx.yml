@@ -1,0 +1,68 @@
+models:
+  - name: faster-rcnn onnx
+    launchers:
+      - framework: onnx_runtime
+        device: CPU
+        model: /home/ggladilo/Documents/tickets/43586/MaskRCNN-10.onnx
+        adapter:
+          type: mask_rcnn
+          classes_out: '6570'
+          scores_out: '6572'
+          boxes_out: '6568'
+          raw_masks_out: '6887'
+
+      - framework: dlsdk
+#        inputs:
+#          - name: image
+#            type: INPUT
+#            shape: [3, 800, 1088]
+        # inputs:
+        #  - name: image
+        #    type: INPUT
+        #    precision: 'FP16'
+
+        device: MYRIAD
+        # allow_reshape_input: true
+        model: /home/ggladilo/Documents/tickets/43586/MaskRCNN-10.onnx
+        adapter:
+          type: mask_rcnn
+          classes_out: '6532'
+          scores_out: '6534'
+          boxes_out: '6530'
+          raw_masks_out: '6849'
+
+    datasets:
+      - name: ms_coco_detection_80_class_with_background
+
+        data_source: /home/ggladilo/hdd/datasets/MSCOCO/val2017
+        annotation_conversion:
+          converter: mscoco_mask_rcnn
+          annotation_file: /home/ggladilo/hdd/datasets/MSCOCO/instances_val2017.json
+          has_background: True
+          sort_annotations: True
+          use_full_label_map: False
+        annotation: mscoco_det_80_bkgr_mask_rcnn.pickle
+        dataset_meta:  mscoco_det_80_bkgr_mask_rcnn.json
+
+        reader: pillow_imread
+        preprocessing:
+          - type: resize
+            use_pillow: True
+
+            # aspect_ratio_scale: detectron_aspect_ratio
+            # size: 800
+            aspect_ratio_scale: fit_to_window
+            dst_height: 800
+            dst_width: 1088
+          - type: bgr_to_rgb
+          - type: normalization
+            mean: 102.9801, 115.9465, 122.7717
+          - type: padding
+            pad_type: right_bottom
+            # stride: 32
+            dst_height: 800
+            dst_width: 1088
+        metrics:
+          - type: coco_precision
+          - type: coco_orig_segm_precision
+          - type: map
